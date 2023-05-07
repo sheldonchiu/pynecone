@@ -135,3 +135,15 @@ def test_set_value():
     assert (
         format.format_event(spec) == 'E("_set_value", {ref:ref_input1,value:message})'
     )
+
+
+def test_wait():
+    """Test the event wait function."""
+    spec = event.wait(1000)
+    assert isinstance(spec, EventSpec)
+    assert spec.handler.fn.__qualname__ == "_wait"
+    assert spec.args == (("time", 1000),)
+    assert format.format_event(spec) == 'E("_wait", {time:1000})'
+    spec = event.wait(Var.create_safe(1000))
+    assert format.format_event(spec) == 'E("_wait", {time:1000})'
+

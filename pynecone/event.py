@@ -214,6 +214,18 @@ def set_value(ref: str, value: Any) -> EventSpec:
     )
 
 
+def wait(time: Union[int, Var[int]]) -> EventSpec:
+    """Client wait.
+
+    Args:
+        time: The amount of time to wait
+
+    Returns:
+        An event to wait
+    """
+    return server_side("_wait", time=time)
+
+
 def get_event(state, event):
     """Get the event from the given state.
 

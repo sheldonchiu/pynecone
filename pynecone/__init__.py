@@ -17,6 +17,7 @@ from .event import (
     console_log,
     redirect,
     set_value,
+    wait,
     window_alert,
 )
 from .event import FileUpload as upload_files
