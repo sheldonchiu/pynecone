@@ -288,3 +288,34 @@ export const preventDefault = (event) => {
     event.preventDefault();
   }
 };
+
+export const getRefValues = () => {
+  const refValues = [];
+
+  Object.entries(refs).forEach(([refName, ref]) => {
+    let value;
+
+    if (ref.current === null) {
+      return;
+    } else {
+      switch (ref.current.type) {
+        case "checkbox":
+          value = ref.current.checked;
+          break;
+        case "radio":
+          value = ref.current.value;
+          break;
+        case "select-multiple":
+          value = Array.from(ref.current.selectedOptions, (option) => option.value);
+          break;
+        default:
+          value = ref.current.value;
+          break;
+      }
+    }
+
+    refValues.push({ refName, value });
+  });
+
+  return refValues;
+};
