@@ -319,3 +319,45 @@ export const getRefValues = () => {
 
   return refValues;
 };
+
+export const updateRefValues = (base_state, ref_mapping) => {
+  let variableValue;
+
+  Object.entries(refs).forEach(([refName, ref]) => {
+
+    function setValue(){
+      if(typeof variableValue === "string") {
+        ref.current.value = variableValue;
+      }
+      else if(typeof variableValue === "boolean") {
+          ref.current.checked = variableValue;
+      }
+    };
+
+    if (ref.current === null) {
+      return;
+    } 
+    else {
+        const parts = refName.split("__");
+        if (parts.length === 2) {
+          try{
+            variableValue = eval(ref_mapping[parts[1]]);
+            setValue();
+          } catch (error) {
+            console.error(`Failed to decode and insert env ${key} ${value}`);
+          }
+        }
+        // If there are three parts, assume it's a dictionary and return the second and third parts as a tuple
+        else if (parts.length === 3) {
+            try {
+                variableValue = eval(ref_mapping[parts[1]]);
+                variableValue = variableValue[Object.keys(variableValue)[parseInt(parts[2])]];
+                setValue();
+            } catch (error) {
+                console.error(`Failed to decode and insert env ${key} ${value}`);
+            }
+        }
+    }
+
+  });
+};
