@@ -2,7 +2,18 @@
 
 import asyncio
 import inspect
-from typing import Any, Callable, Coroutine, Dict, List, Optional, Tuple, Type, Union
+from typing import (
+    Any,
+    AsyncIterator,
+    Callable,
+    Coroutine,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
 
 from fastapi import FastAPI, UploadFile
 from fastapi.middleware import cors
@@ -88,15 +99,12 @@ class App(Base):
         self.add_cors()
         self.add_default_endpoints()
 
-        # Set up CORS options.
-        cors_allowed_origins = config.cors_allowed_origins
-        if config.cors_allowed_origins == [constants.CORS_ALLOWED_ORIGINS]:
-            cors_allowed_origins = "*"
-
         # Set up the Socket.IO AsyncServer.
         self.sio = AsyncServer(
             async_mode="asgi",
-            cors_allowed_origins=cors_allowed_origins,
+            cors_allowed_origins="*"
+            if config.cors_allowed_origins == constants.CORS_ALLOWED_ORIGINS
+            else config.cors_allowed_origins,
             cors_credentials=config.cors_credentials,
             max_http_buffer_size=config.polling_max_http_buffer_size,
             ping_interval=constants.PING_INTERVAL,
@@ -378,23 +386,13 @@ class App(Base):
         ):
             self.pages[froute(constants.SLUG_404)] = component
 
-    def compile(self, force_compile: bool = False):
-        """Compile the app and output it to the pages folder.
-
-        If the config environment is set to production, the app will
-        not be compiled.
-
-        Args:
-            force_compile: Whether to force the app to compile.
-        """
+    def compile(self):
+        """Compile the app and output it to the pages folder."""
         for render, kwargs in DECORATED_ROUTES:
             self.add_page(render, **kwargs)
 
         # Get the env mode.
         config = get_config()
-        if config.env != constants.Env.DEV and not force_compile:
-            print("Skipping compilation in non-dev mode.")
-            return
 
         # Update models during hot reload.
         if config.db_url is not None:
@@ -424,7 +422,7 @@ class App(Base):
 
 async def process(
     app: App, event: Event, sid: str, headers: Dict, client_ip: str
-) -> StateUpdate:
+) -> AsyncIterator[StateUpdate]:
     """Process an event.
 
     Args:
@@ -434,7 +432,7 @@ async def process(
         headers: The client headers.
         client_ip: The client_ip.
 
-    Returns:
+    Yields:
         The state updates after processing the event.
     """
     # Get the state for the session.
@@ -460,19 +458,22 @@ async def process(
     # Preprocess the event.
     update = await app.preprocess(state, event)
 
+    # If there was an update, yield it.
+    if update is not None:
+        yield update
+
     # Only process the event if there is no update.
-    if update is None:
-        # Apply the event to the state.
-        update = await state._process(event)
+    else:
+        # Process the event.
+        async for update in state._process(event):
+            yield update
 
         # Postprocess the event.
+        assert update is not None, "Process did not return an update."
         update = await app.postprocess(state, event, update)
 
-    # Update the state.
+    # Set the state for the session.
     app.state_manager.set_state(event.token, state)
-
-    # Return the update.
-    return update
 
 
 async def ping() -> str:
@@ -544,7 +545,8 @@ def upload(app: App):
             name=handler,
             payload={handler_upload_param[0]: files},
         )
-        update = await state._process(event)
+        # TODO: refactor this to handle yields.
+        update = await state._process(event).__anext__()
         return update
 
     return upload_file
@@ -608,10 +610,9 @@ class EventNamespace(AsyncNamespace):
         client_ip = environ["REMOTE_ADDR"]
 
         # Process the events.
-        update = await process(self.app, event, sid, headers, client_ip)
-
-        # Emit the event.
-        await self.emit(str(constants.SocketEvent.EVENT), update.json(), to=sid)  # type: ignore
+        async for update in process(self.app, event, sid, headers, client_ip):
+            # Emit the event.
+            await self.emit(str(constants.SocketEvent.EVENT), update.json(), to=sid)  # type: ignore
 
     async def on_ping(self, sid):
         """Event for testing the API endpoint.

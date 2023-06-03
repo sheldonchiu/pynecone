@@ -9,6 +9,7 @@ from . import el as el
 from .app import App as App
 from .app import UploadFile as UploadFile
 from .base import Base as Base
+from .compiler.utils import get_asset_path
 from .components import *
 from .components.component import custom_component as memo
 from .components.graphing.victory import data as data
@@ -21,6 +22,7 @@ from .event import EventChain as EventChain
 from .event import FileUpload as upload_files
 from .event import console_log as console_log
 from .event import redirect as redirect
+from .event import set_focus as set_focus
 from .event import set_value as set_value
 from .event import window_alert as window_alert
 from .middleware import Middleware as Middleware
