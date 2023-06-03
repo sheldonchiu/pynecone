@@ -289,21 +289,38 @@ export const preventDefault = (event) => {
   }
 };
 
-export const getRefValues = () => {
+/**
+ * Returns an array of objects containing the names and current values of all
+ * matching refs, optionally filtering by prefix and/or refs to update.
+ *
+ * @param {Array} [var_list=null] - An optional array of ref names to update.
+ * @param {string} [prefix=null] - An optional prefix to match for ref names.
+ *
+ * @returns {Array} - An array of objects containing ref names and current values.
+ */
+export const getRefValues = (refs_to_update=[], prefix=null) => {
   const refValues = [];
 
+  // Loop through each ref entry using Object.entries
   Object.entries(refs).forEach(([refName, ref]) => {
+    // Initialize value variable
     let value;
-
+    
+    // If the ref.current is null, move on to the next ref
     if (ref.current === null) {
       return;
-    } else {
+    }
+    
+    // Check if prefix is provided and if the refName starts with the prefix
+    else if (!prefix || refName.startsWith(prefix)) {
+      // If refs_to_update is provided, check if the refName is in the array
+      if (refs_to_update.length > 0 && !refs_to_update.includes(refName)) {
+        return;
+      }
+      // Otherwise, switch on the ref.current.type to get the current value
       switch (ref.current.type) {
         case "checkbox":
           value = ref.current.checked;
-          break;
-        case "radio":
-          value = ref.current.value;
           break;
         case "select-multiple":
           value = Array.from(ref.current.selectedOptions, (option) => option.value);
@@ -320,7 +337,7 @@ export const getRefValues = () => {
   return refValues;
 };
 
-export const updateRefValues = (base_state, ref_mapping) => {
+export const updateRefValues = (base_state, ref_mapping, rendering=false) => {
   let variableValue;
 
   Object.entries(refs).forEach(([refName, ref]) => {
@@ -330,7 +347,14 @@ export const updateRefValues = (base_state, ref_mapping) => {
         ref.current.value = variableValue;
       }
       else if(typeof variableValue === "boolean") {
-          ref.current.checked = variableValue;
+          if(!rendering) {
+            if(ref.current.checked != variableValue){
+              ref.current.click();
+            }
+          }
+          else{
+            ref.current.checked = variableValue;
+          }
       }
     };
 
