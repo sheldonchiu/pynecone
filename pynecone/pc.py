@@ -208,6 +208,9 @@ def export(
         # Get the app config and modify the api_url base on username and app_name.
         config.api_url = prerequisites.get_production_backend_url()
 
+    if not backend:
+        build.setup_frontend(Path.cwd())
+
     # Compile the app in production mode and export it.
     console.rule("[bold]Compiling production app and preparing for export.")
     app = prerequisites.get_app().app
