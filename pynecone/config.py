@@ -154,6 +154,12 @@ class Config(Base):
 
     # The redis url.
     redis_url: Optional[str] = constants.REDIS_URL
+    
+    redis_username: Optional[str] = constants.REDIS_USERNAME
+    
+    redis_password: Optional[str] = constants.REDIS_PASSWORD
+    
+    redis_ssl: Optional[bool] = constants.REDIS_SSL
 
     # Telemetry opt-in.
     telemetry_enabled: bool = True

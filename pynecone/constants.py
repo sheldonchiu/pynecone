@@ -8,7 +8,7 @@ from typing import Any, Type
 
 import pkg_resources
 
-
+bool_t = lambda x: x.lower() in ['true', 'yes', '1']
 def get_value(key: str, default: Any = None, type_: Type = str) -> Type:
     """Get the value for the constant.
     Obtain os env value and cast non-string types into
@@ -157,6 +157,13 @@ DB_NAME = os.getenv("DB_NAME", "pynecone.db")
 DB_URL = get_value("DB_URL", f"sqlite:///{DB_NAME}")
 # The redis url
 REDIS_URL = get_value("REDIS_URL")
+# The redis user
+REDIS_USERNAME = get_value("REDIS_USERNAME", None)
+# The redis password
+REDIS_PASSWORD = get_value("REDIS_PASSWORD", None)
+# Weather to use ssl for redis
+REDIS_SSL = bool_t(get_value("REDIS_SSL", "0"))
+
 # The default title to show for Pynecone apps.
 DEFAULT_TITLE = "Pynecone App"
 # The default description to show for Pynecone apps.

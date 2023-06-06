@@ -114,8 +114,16 @@ def get_redis() -> Optional[Redis]:
     if config.redis_url is None:
         return None
     redis_url, redis_port = config.redis_url.split(":")
+    redis_password = config.redis_password if config.redis_password else None
+    redis_username = config.redis_username if config.redis_username else None
     print("Using redis at", config.redis_url)
-    return Redis(host=redis_url, port=int(redis_port), db=0)
+    return Redis(host=redis_url, 
+                 port=int(redis_port), 
+                 username=redis_username,
+                 password=redis_password,
+                 ssl = config.redis_ssl,
+                 db=0
+            )
 
 
 def get_production_backend_url() -> str:
