@@ -356,9 +356,8 @@ export const getRefValues = (refs_to_update=[], prefix=null) => {
           value = ref.current.value;
           break;
       }
+      refValues.push({ refName, value });
     }
-
-    refValues.push({ refName, value });
   });
 
   return refValues;
