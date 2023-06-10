@@ -8,6 +8,7 @@ import platform
 import re
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 from types import ModuleType
 from typing import Optional
@@ -216,6 +217,7 @@ def initialize_web_directory():
     path_ops.rm(os.path.join(constants.WEB_TEMPLATE_DIR, constants.NODE_MODULES))
     path_ops.rm(os.path.join(constants.WEB_TEMPLATE_DIR, constants.PACKAGE_LOCK))
     path_ops.cp(constants.WEB_TEMPLATE_DIR, constants.WEB_DIR)
+    path_ops.mkdir(constants.WEB_ASSETS_DIR)
 
     # Write the current version of distributed pynecone package to a PCVERSION_APP_FILE."""
     with open(constants.PCVERSION_APP_FILE, "w") as f:
@@ -342,3 +344,21 @@ def is_latest_template() -> bool:
     with open(constants.PCVERSION_APP_FILE) as f:  # type: ignore
         app_version = json.load(f)["version"]
     return app_version == constants.VERSION
+
+
+def check_admin_settings():
+    """Check if admin settings are set and valid for logging in cli app."""
+    admin_dash = get_config().admin_dash
+    current_time = datetime.now()
+    if admin_dash:
+        if not admin_dash.models:
+            console.print(
+                f"[yellow][Admin Dashboard][/yellow] :megaphone: Admin dashboard enabled, but no models defined in [bold magenta]pcconfig.py[/bold magenta]. Time: {current_time}"
+            )
+        else:
+            console.print(
+                f"[yellow][Admin Dashboard][/yellow] Admin enabled, building admin dashboard. Time: {current_time}"
+            )
+            console.print(
+                "Admin dashboard running at: [bold green]http://localhost:8000/admin[/bold green]"
+            )
